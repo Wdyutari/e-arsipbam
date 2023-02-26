@@ -61,10 +61,10 @@
 
 </html>
 <script type="text/javascript"> 
-$(function(){
-    $("#tanggal").datepicker({
-        todayHighlight: true,
-        format: "dd-mm-yyyy"
-    });
-})
+// $(function(){
+//     $("#tanggal").datepicker({
+//         todayHighlight: true,
+//         format: "dd-mm-yyyy"
+//     });
+// })
 </script>

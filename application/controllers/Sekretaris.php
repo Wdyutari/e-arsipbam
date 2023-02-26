@@ -1,27 +1,28 @@
-<?php 
+<?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Sekretaris extends CI_Controller
 {
     public function __construct()
-    { 
+    {
         parent::__construct();
         $this->load->library('form_validation');
         $this->load->library('session');
         $this->load->model('Login_model');
         $this->load->model('Sekretaris_model');
 
-        if($this->Login_model->is_role() != "3")
-        {
+        if ($this->Login_model->is_role() != "3") {
             redirect('Auth');
         }
     }
 
-   public function index()
-    { 
+    public function index()
+    {
         $data['title'] = "Halaman Sekretaris";
-        $data['user'] = $this->db->get_where('user', ['email' => $this
-            ->session->userdata('email')])->row_array();
+        $data['user'] = $this->db->get_where('user', [
+            'email' => $this
+                ->session->userdata('email')
+        ])->row_array();
         $this->load->view('templates/sekretaris_header', $data);
         $this->load->view('templates/sekretaris_sidebar', $data);
         $this->load->view('templates/sekretaris_topbar', $data);
@@ -31,82 +32,89 @@ class Sekretaris extends CI_Controller
 
 
     public function data_dokumen()
-     {
+    {
         $data['title'] = "Halaman Sekretaris";
-        $data['user'] = $this->db->get_where('user', ['email' => $this
-            ->session->userdata('email')])->row_array();
+        $data['user'] = $this->db->get_where('user', [
+            'email' => $this
+                ->session->userdata('email')
+        ])->row_array();
         $data['tambah_dokumen'] = $this->db->get('tb_dok_sekretaris')->result_array();
         $this->load->view('templates/sekretaris_header', $data);
         $this->load->view('templates/sekretaris_sidebar', $data);
         $this->load->view('templates/sekretaris_topbar', $data);
         $this->load->view('sekretaris/data_dokumen', $data);
-        $this->load->view('templates/sekretaris_footer'); 
+        $this->load->view('templates/sekretaris_footer');
 
-     }
+    }
 
 
     public function tambah_dokumen()
     {
-        $config['upload_path']          = './assets/upload/pdf_sekretaris/';
-        $config['allowed_types']        = 'pdf';
-        $config['file_name']            = time(); 
-        $config['encrypt_name']         = FALSE;
-        $config['max_size']             = 1000;
+        $config['upload_path'] = './assets/upload/pdf_sekretaris/';
+        $config['allowed_types'] = 'pdf';
+        $config['file_name'] = time();
+        $config['encrypt_name'] = FALSE;
+        $config['max_size'] = 1000;
         // $config['max_width']            = 1024;
         // $config['max_height']           = 768;
-        
+
         $this->load->library('upload', $config);
-        if ( !$this->upload->do_upload('url_dokumen'))
-        {
+        if (!$this->upload->do_upload('url_dokumen')) {
             $error = $this->upload->display_errors();
             // menampilkan pesan error
             print_r($error);
         } else {
-          $data =[
+            $data = [
                 'nomor_dok' => $this->input->post('nomor_dok'),
                 'nama_dokumen' => $this->input->post('nama_dokumen'),
                 'jenis_dokumen' => $this->input->post('jenis_dokumen'),
-                'url_dokumen' => $this ->upload->data("file_name"),
-                'created_at' => date('Y-m-d H:i:s',strtotime($this->input->post('created_at')))
+                'url_dokumen' => $this->upload->data("file_name"),
+                'created_at' => date('Y-m-d H:i:s')
             ];
 
-                $this->db->insert('tb_dok_sekretaris', $data);
-                redirect('sekretaris/data_dokumen');
+            $this->db->insert('tb_dok_sekretaris', $data);
+            redirect('sekretaris/data_dokumen');
         }
     }
 
     public function delete_dok($id_dok_sekretaris)
-        {
-            $this->Sekretaris_model->hapusDok($id_dok_sekretaris);
-            redirect('sekretaris/data_dokumen');
-        }
+    {
+        $this->Sekretaris_model->hapusDok($id_dok_sekretaris);
+        redirect('sekretaris/data_dokumen');
+    }
 
     public function update_dokumen()
-        {
-         $id_dok_sekretaris = $this->input->post('id_dok_sekretaris');
-         $data =[
-                'nomor_dok' => $this->input->post('nomor_dok'),
-                'nama_dokumen' => $this->input->post('nama_dokumen'),
-                'jenis_dokumen' => $this->input->post('jenis_dokumen'),
-                'created_at' => date('Y-m-d H:i:s',strtotime($this->input->post('created_at')))
-            ];
+    {
+        $id_dok_sekretaris = $this->input->post('id_dok_sekretaris');
+        $data = [
+            'nomor_dok' => $this->input->post('nomor_dok'),
+            'nama_dokumen' => $this->input->post('nama_dokumen'),
+            'jenis_dokumen' => $this->input->post('jenis_dokumen'),
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
 
-            $this->db->where('id_dok_sekretaris', $id_dok_sekretaris);
-            $this->db->update('tb_dok_sekretaris', $data);
-            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">  Data berhasil diedit! </div>');
-            redirect('sekretaris/data_dokumen');
+        $this->db->where('id_dok_sekretaris', $id_dok_sekretaris);
+
+        $response = $this->db->update('tb_dok_sekretaris', $data);
+        if (!$response) {
+            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Terjadi Kesalahan!</div>');
+            return redirect('sekretaris/data_dokumen');
         }
 
+        $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">  Data berhasil diedit! </div>');
+        redirect('sekretaris/data_dokumen');
+    }
 
-   function viewfile(){
+
+    function viewfile()
+    {
         $fname = $this->uri->segment(3);
-        $tofile= realpath("./assets/upload/pdf_sekretaris/".$fname);
+        $tofile = realpath("./assets/upload/pdf_sekretaris/" . $fname);
         header('Content-Type: application/pdf');
         readfile($tofile);
     }
 
     public function viewPdf($id_dok_sekretaris)
-
     {
 
         if (isset($_POST['view'])) {
@@ -127,10 +135,35 @@ class Sekretaris extends CI_Controller
         You have been logged out!  </div>');
         redirect('auth');
     }
-    
-    
 
-   
+    public function testing()
+    {
+        $fileone = realpath('./assets/upload/pdf_sekretaris/1677306906.pdf');
+        $cmd = exec('convert --version');
+        // $output = null;
+        // $retval = null;
+        var_dump($cmd);
+
+        $im = new Imagick($fileone);
+        // $im->setImageFormat('jpg');
+        // header('Content-Type: image/jpeg');
+        // echo $im;
+
+        // $config['image_library'] = 'GD';
+        // $config['source_image'] = './assets/upload/pdf_sekretaris/1677037254.pdf';
+        // $config['create_thumb'] = TRUE;
+        // $config['maintain_ratio'] = TRUE;
+        // $config['width'] = 75;
+        // $config['height'] = 50;
+
+        // $this->load->library('image_lib', $config);
+
+
+        // if(!$this->image_lib->resize()){
+        //     echo $this->image_lib->display_errors();
+        // }
+    }
+
+
 
 }
-
