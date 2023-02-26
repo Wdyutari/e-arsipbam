@@ -92,7 +92,10 @@
 								</td>
 								<!-- <td><img style="width: 150px;height: 100px;" src="<?= base_url(); ?>assets/upload/pdf_sekretaris/<?= $tdk['url_dokumen']; ?>"></td> -->
 								<td>
-									<a href="../assets/upload/pdf_sekretaris/<?= $tdk['url_dokumen']; ?>">Preview</a>
+									<?php
+									$preview = strstr($tdk['url_dokumen'], '.', true);
+									?>
+									<a href="../assets/upload/pdf_sekretaris/<?= $tdk['url_dokumen']; ?>" data-toggle="popover" data-trigger="hover" data-popover-content="#a1" data-html="true" data-url="<?= $preview; ?>">Lihat Dokumen</a>
 								</td>
 								<td>
 									<?= $tdk['uploaded_at']; ?>
@@ -115,26 +118,55 @@
 	</div>
 </div>
 
+<div class="hidden d-none" id="a1">
+	<div class="popover-heading">
+		Preview
+	</div>
+
+	<div class="popover-body">
+		<img id="PDFPreview" class="img-thumbnail" src="./">
+	</div>
+</div>
+
+
 <script>
 	var data = JSON.parse(`<?= json_encode($tambah_dokumen); ?>`);
 	$(function () {
+		$('[data-toggle="popover"]').popover({
+			html: true,
+			content: function () {
+				var content = $(this).attr("data-popover-content");
+				return $(content).children(".popover-body").html();
+			},
+			title: function () {
+				var title = $(this).attr("data-popover-content");
+				return $(title).children(".popover-heading").html();
+			}
+		});
+
+		$('[data-toggle="popover"]').on('show.bs.popover', function(event){
+			var url = $(event.target).data('url');
+			
+			$('#PDFPreview').attr('src', `<?= base_url('assets/upload/pdf_sekretaris'); ?>/${url}_preview.jpg`);
+		});
+
 		$("#tambahModalDok").on('show.bs.modal', function (event) {
 			var button = $(event.relatedTarget);
 			var row = data[button.data('dokumen')];
 
-			if(row){
+			if (row) {
 				$('#nomorDokumen').val(row['nomor_dok']);
 				$('#namaDokumen').val(row['nama_dokumen']);
-				$('#jenisDokumen').val(row['jenis_dokumen']);				
+				$('#jenisDokumen').val(row['jenis_dokumen']);
 			}
 			$("#Dokumen").prop('disabled', (row));
 			$('#judulModal').text((row) ? 'Edit Dokumen PT Bukit Asam Medika' : 'Tambah Dokumen PT Bukit Asam Medika');
 			$('#tblSimpanDokumen').text((row) ? 'Edit Data' : 'Tambah Data')
-			$('#formInput').attr('action', 
+			$('#formInput').attr('action',
 				(row) ? '<?= base_url(); ?>sekretaris/update_dokumen' : '<?= base_url(); ?>sekretaris/tambah_dokumen'
 			);
 			$('#idDokumen').val(row?.id_dok_sekretaris || null);
-		})
+		});
 	});
 
 </script>

@@ -52,7 +52,7 @@ class Sekretaris extends CI_Controller
     {
         $config['upload_path'] = './assets/upload/pdf_sekretaris/';
         $config['allowed_types'] = 'pdf';
-        $config['file_name'] = time();
+        $config['file_name'] = 'sekretaris_' . time();
         $config['encrypt_name'] = FALSE;
         $config['max_size'] = 1000;
         // $config['max_width']            = 1024;
@@ -62,19 +62,32 @@ class Sekretaris extends CI_Controller
         if (!$this->upload->do_upload('url_dokumen')) {
             $error = $this->upload->display_errors();
             // menampilkan pesan error
-            print_r($error);
-        } else {
-            $data = [
-                'nomor_dok' => $this->input->post('nomor_dok'),
-                'nama_dokumen' => $this->input->post('nama_dokumen'),
-                'jenis_dokumen' => $this->input->post('jenis_dokumen'),
-                'url_dokumen' => $this->upload->data("file_name"),
-                'created_at' => date('Y-m-d H:i:s')
-            ];
-
-            $this->db->insert('tb_dok_sekretaris', $data);
-            redirect('sekretaris/data_dokumen');
+            return print_r($error);
         }
+
+        $uploadData = $this->upload->data();
+        // PDF TO IMAGE
+        $im = new Imagick();
+
+        $im->readImage($uploadData['full_path'] . '[0]');
+        $im->setImageAlphaChannel(Imagick::VIRTUALPIXELMETHOD_WHITE);
+        $im->thumbnailImage(256, 0); // <== ATUR UKURAN MAKSIMAL PREVIEW DISINI
+        $im->setImageFormat('jpg');
+
+        $im->writeImage($uploadData['file_path'] . $uploadData['raw_name'] . '_preview.jpg');
+        //END OF PDF TO IMAGE
+
+        $data = [
+            'nomor_dok' => $this->input->post('nomor_dok'),
+            'nama_dokumen' => $this->input->post('nama_dokumen'),
+            'jenis_dokumen' => $this->input->post('jenis_dokumen'),
+            'url_dokumen' => $this->upload->data("file_name"),
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+
+        $this->db->insert('tb_dok_sekretaris', $data);
+        redirect('sekretaris/data_dokumen');
+
     }
 
     public function delete_dok($id_dok_sekretaris)
@@ -135,35 +148,5 @@ class Sekretaris extends CI_Controller
         You have been logged out!  </div>');
         redirect('auth');
     }
-
-    public function testing()
-    {
-        $fileone = realpath('./assets/upload/pdf_sekretaris/1677306906.pdf');
-        $cmd = exec('convert --version');
-        // $output = null;
-        // $retval = null;
-        var_dump($cmd);
-
-        $im = new Imagick($fileone);
-        // $im->setImageFormat('jpg');
-        // header('Content-Type: image/jpeg');
-        // echo $im;
-
-        // $config['image_library'] = 'GD';
-        // $config['source_image'] = './assets/upload/pdf_sekretaris/1677037254.pdf';
-        // $config['create_thumb'] = TRUE;
-        // $config['maintain_ratio'] = TRUE;
-        // $config['width'] = 75;
-        // $config['height'] = 50;
-
-        // $this->load->library('image_lib', $config);
-
-
-        // if(!$this->image_lib->resize()){
-        //     echo $this->image_lib->display_errors();
-        // }
-    }
-
-
 
 }
